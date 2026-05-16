@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aniverse - Stream Anime</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand" id="navBrand">
+                <i class="fas fa-globe"></i>
+                <span>Aniverse</span>
+            </div>
+            <div class="nav-search">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search anime by name..." autocomplete="off">
+                    <div id="searchDropdown" class="search-dropdown"></div>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="nav-link active" data-filter="all">All</a>
+                <a href="#" class="nav-link" data-filter="airing">Airing</a>
+                <a href="#" class="nav-link" data-filter="upcoming">Upcoming</a>
+                <a href="#" class="nav-link" data-filter="popular">Popular</a>
+                <a href="#" class="nav-link" data-filter="library">My Library</a>
+            </div>
+            <div class="nav-actions">
+                <button id="syncBtn" class="icon-btn" title="Sync StreamP2P Library">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button id="settingsBtn" class="icon-btn" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="heroSection">
+        <div class="hero-particles" id="heroParticles"></div>
+        <div class="hero-content">
+            <div class="hero-badge">Powered by AniList & MyAnimeList</div>
+            <h1>Stream Any Anime</h1>
+            <p>Search from the entire MyAnimeList & AniList database. Hard sub, soft sub, or dual audio — your choice. All content synced with StreamP2P.</p>
+            <div class="hero-search">
+                <input type="text" id="heroSearchInput" placeholder="Type an anime name to start streaming...">
+                <button id="heroSearchBtn"><i class="fas fa-search"></i> Search</button>
+            </div>
+            <div class="hero-stats" id="heroStats">
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="libraryCount">0</span>
+                    <span class="hero-stat-label">In Library</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="episodeCount">0</span>
+                    <span class="hero-stat-label">Episodes</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value" id="monitorCount">0</span>
+                    <span class="hero-stat-label">Monitoring</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- My Library Section (StreamP2P synced) -->
+        <section class="section" id="librarySection" style="display:none;">
+            <div class="section-header">
+                <h2><i class="fas fa-book-open"></i> My Library</h2>
+                <span class="badge live-badge">SYNCED</span>
+            </div>
+            <div class="anime-grid" id="libraryGrid"></div>
+        </section>
+
+        <!-- Trending Section -->
+        <section class="section" id="trendingSection">
+            <div class="section-header">
+                <h2><i class="fas fa-fire"></i> Trending Now</h2>
+                <button class="see-all-btn">See All <i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="anime-grid" id="trendingGrid"></div>
+        </section>
+
+        <!-- Recently Added -->
+        <section class="section" id="recentSection">
+            <div class="section-header">
+                <h2><i class="fas fa-clock"></i> Recently Added</h2>
+                <button class="see-all-btn">See All <i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="anime-grid" id="recentGrid"></div>
+        </section>
+
+        <!-- Auto-Monitored Ongoing -->
+        <section class="section" id="ongoingSection">
+            <div class="section-header">
+                <h2><i class="fas fa-satellite-dish"></i> Auto-Monitored (Ongoing)</h2>
+                <span class="badge live-badge">LIVE</span>
+            </div>
+            <div class="anime-grid" id="ongoingGrid"></div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-globe"></i>
+                <span>Aniverse</span>
+            </div>
+            <p>Anime streaming powered by StreamP2P. Content discovery via AniList & MyAnimeList.</p>
+            <div class="footer-links">
+                <a href="https://anilist.co" target="_blank">AniList</a>
+                <a href="https://myanimelist.net" target="_blank">MyAnimeList</a>
+                <a href="https://streamp2p.com" target="_blank">StreamP2P</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Anime Detail Modal -->
+    <div class="modal-overlay" id="animeModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+            <div class="modal-body">
+                <div class="modal-banner" id="modalBanner">
+                    <img id="modalBannerImg" src="" alt="">
+                    <div class="banner-overlay"></div>
+                </div>
+                <div class="modal-info">
+                    <div class="modal-left">
+                        <img id="modalCover" class="modal-cover" src="" alt="">
+                    </div>
+                    <div class="modal-right">
+                        <h1 id="modalTitle"></h1>
+                        <div class="modal-meta">
+                            <span id="modalYear" class="meta-tag"></span>
+                            <span id="modalStatus" class="meta-tag"></span>
+                            <span id="modalEpisodes" class="meta-tag"></span>
+                            <span id="modalScore" class="meta-tag score"></span>
+                        </div>
+                        <div class="modal-genres" id="modalGenres"></div>
+                        <p id="modalSynopsis" class="modal-synopsis"></p>
+                    </div>
+                </div>
+
+                <!-- Sub Type Toggle -->
+                <div class="sub-toggle-container">
+                    <div class="sub-toggle">
+                        <button class="sub-btn active" data-sub="soft">
+                            <i class="fas fa-closed-captioning"></i> Soft Sub
+                        </button>
+                        <button class="sub-btn" data-sub="hard">
+                            <i class="fas fa-layer-group"></i> Hard Sub
+                        </button>
+                        <button class="sub-btn" data-sub="dub">
+                            <i class="fas fa-microphone"></i> English Dub
+                        </button>
+                    </div>
+                    <div class="sub-episode-count" id="subEpisodeCount"></div>
+                </div>
+
+                <!-- Episode List -->
+                <div class="episode-section">
+                    <h3>Episodes</h3>
+                    <div class="episode-grid" id="episodeGrid"></div>
+                </div>
+
+                <!-- Player -->
+                <div class="player-container" id="playerContainer" style="display:none;">
+                    <div class="player-wrapper">
+                        <iframe id="videoPlayer" src="" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+                    </div>
+                    <div class="player-info">
+                        <span id="playerEpisode"></span>
+                        <span id="playerSubType"></span>
+                    </div>
+                </div>
+
+                <!-- Coming Soon -->
+                <div class="coming-soon" id="comingSoon" style="display:none;">
+                    <i class="fas fa-hourglass-half"></i>
+                    <h3>Coming Soon</h3>
+                    <p>This anime is being processed. Episodes will appear once uploaded.</p>
+                    <p class="coming-soon-sub" id="comingSoonSub"></p>
+                </div>
+
+                <!-- Movie/Special Sections -->
+                <div class="extra-section" id="moviesSection" style="display:none;">
+                    <h3><i class="fas fa-film"></i> Movies</h3>
+                    <div class="episode-grid" id="moviesGrid"></div>
+                </div>
+                <div class="extra-section" id="specialsSection" style="display:none;">
+                    <h3><i class="fas fa-star"></i> Specials & OVAs</h3>
+                    <div class="episode-grid" id="specialsGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content settings-modal">
+            <button class="modal-close" id="settingsClose"><i class="fas fa-times"></i></button>
+            <h2><i class="fas fa-cog"></i> Settings</h2>
+            <div class="settings-grid">
+                <div class="setting-item full-width">
+                    <label>StreamP2P API Key</label>
+                    <input type="password" id="settStreamP2PKey" placeholder="Your StreamP2P API key">
+                </div>
+                <div class="setting-item">
+                    <label>Default Sub Type</label>
+                    <select id="settDefaultSub">
+                        <option value="soft">Soft Sub</option>
+                        <option value="hard">Hard Sub</option>
+                        <option value="dub">English Dub</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Data Source</label>
+                    <select id="settDataSource">
+                        <option value="mal">MyAnimeList</option>
+                        <option value="anilist">AniList</option>
+                        <option value="both">Both</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Auto-Monitor Ongoing</label>
+                    <label class="switch">
+                        <input type="checkbox" id="settAutoMonitor" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label>Auto-Sync on Load</label>
+                    <label class="switch">
+                        <input type="checkbox" id="settAutoSync" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item full-width">
+                    <label>GitHub Repo URL (for pipeline triggers)</label>
+                    <input type="text" id="settRepoUrl" placeholder="https://github.com/username/repo">
+                </div>
+                <button class="save-settings-btn" id="saveSettingsBtn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <p>Searching anime database...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
