@@ -1,0 +1,49 @@
+name: Auto-Monitor Ongoing
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      anime_name:
+        description: 'Specific anime to check (leave empty for all monitored)'
+        required: false
+        type: string
+
+env:
+  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+  CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+  GEMINI_API_KEY: ${{ secrets.ai }}
+  STREAMP2P_API_KEY: ${{ secrets.STREAMP2P_API_KEY }}
+  STREAMP2P_API_BASE: 'https://streamp2p.com/api/v1'
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  check-and-download:
+    name: Check Ongoing Anime
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install system tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y aria2 ffmpeg mkvtoolnix
+
+      - name: Auto-monitor check
+        run: |
+          echo "::group::Checking ongoing anime"
+          python auto_schedule.py --check
+          echo "::endgroup::"
+        env:
+          SPECIFIC_ANIME: ${{ inputs.anime_name || '' }}

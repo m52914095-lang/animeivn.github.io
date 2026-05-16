@@ -1,0 +1,106 @@
+name: Anime Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      anime_name:
+        description: 'Anime name to process'
+        required: true
+        type: string
+      anime_type:
+        description: 'Content type filter (all, episodes, movies, specials, ova)'
+        required: false
+        default: 'all'
+        type: string
+      force_redownload:
+        description: 'Force re-download even if already exists'
+        required: false
+        default: 'false'
+        type: string
+
+env:
+  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+  CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+  GEMINI_API_KEY: ${{ secrets.ai }}
+  STREAMP2P_API_KEY: ${{ secrets.STREAMP2P_API_KEY }}
+  STREAMP2P_API_BASE: 'https://streamp2p.com/api/v1'
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  process-anime:
+    name: Process ${{ inputs.anime_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install system tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y aria2 ffmpeg mkvtoolnix
+
+      - name: Step 1 - AI discovers all anime content
+        id: ai_discover
+        run: |
+          echo "::group::AI Content Discovery"
+          python ai_search.py "${{ inputs.anime_name }}" > anime_content.json
+          echo "::endgroup::"
+          echo "=== Discovery result ==="
+          python -c "import json; data=json.load(open('anime_content.json')); print(f'Title: {data.get(\"anime_title\")}'); print(f'Content items: {len(data.get(\"content\",[]))}'); print(f'Status: {data.get(\"status\")}')"
+
+      - name: Step 2 - Search Nyaa for magnets
+        id: nyaa_search
+        run: |
+          echo "::group::Nyaa Search"
+          python nyaa_search.py anime_content.json > magnet_links.json
+          echo "::endgroup::"
+          echo "=== Nyaa search result ==="
+          python -c "import json; data=json.load(open('magnet_links.json')); batch=len(data.get('batch_magnets',[])); found=sum(1 for m in data.get('magnets',[]) if m.get('magnet')); missing=sum(1 for m in data.get('magnets',[]) if not m.get('magnet')); print(f'Batch: {batch}, Found: {found}, Missing: {missing}')"
+
+      - name: Step 3 - Download via aria2c
+        id: download
+        run: |
+          mkdir -p downloads
+          echo "::group::Downloading torrents"
+          python download.py magnet_links.json downloads/
+          echo "::endgroup::"
+          echo "=== Downloaded files ==="
+          find downloads/ -type f \( -name "*.mkv" -o -name "*.mp4" \) | head -20 || echo "No video files found"
+
+      - name: Step 4 - Process videos (hard sub + soft sub + dub)
+        id: process
+        run: |
+          mkdir -p processed/softsub processed/hardsub processed/dub
+          echo "::group::Processing videos"
+          python process_video.py downloads/ processed/
+          echo "::endgroup::"
+          echo "=== Processed files ==="
+          find processed/ -type f \( -name "*.mkv" -o -name "*.mp4" \) | head -20 || echo "No processed files found"
+
+      - name: Step 5 - Upload to StreamP2P
+        id: upload
+        run: |
+          echo "::group::Uploading to StreamP2P"
+          python upload_streamp2p.py processed/ "${{ inputs.anime_name }}"
+          echo "::endgroup::"
+
+      - name: Step 6 - Update anime database
+        id: update_db
+        run: |
+          python update_db.py "${{ inputs.anime_name }}" upload_results.json
+          echo "Database updated"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf downloads/ processed/
+          echo "Cleanup done"
